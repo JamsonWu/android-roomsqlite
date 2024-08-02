@@ -30,11 +30,13 @@ interface AppContainer {
 
 /**
  * [AppContainer] implementation that provides instance of [OfflineItemsRepository]
+ * 接口实现类，接口只是定义了一个属性，实现类给这个属性赋值
  */
 class AppDataContainer(private val context: Context) : AppContainer {
     /**
      * Implementation for [ItemsRepository]
      * 实现数据库仓库ItemsRepository
+     * 由于使用了lazy懒加载，当初次使用时才会进行初始化
      */
     override val itemsRepository: ItemsRepository by lazy {
         // 仓库初始化

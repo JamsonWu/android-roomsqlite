@@ -64,10 +64,12 @@ fun InventoryNavHost(
             route = ItemDetailsDestination.routeWithArgs,
             // 带参数路由
             // 奇怪没见到用Query参数的？ todo...
+            // ViewModel中通过创建实例createSavedStateHandle可以读取到
             arguments = listOf(navArgument(ItemDetailsDestination.itemIdArg) {
                 type = NavType.IntType
             })
         ) {
+            // 路由导航其中$it的值如何传？ItemDetailsScreen组件如何接收？
             ItemDetailsScreen(
                 navigateToEditItem = { navController.navigate("${ItemEditDestination.route}/$it") },
                 navigateBack = { navController.navigateUp() }

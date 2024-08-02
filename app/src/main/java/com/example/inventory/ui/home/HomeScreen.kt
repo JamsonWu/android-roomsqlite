@@ -154,6 +154,7 @@ private fun InventoryList(
             InventoryItem(item = item,
                 modifier = Modifier
                     .padding(dimensionResource(id = R.dimen.padding_small))
+                    // 居然还可以通过Modifier中添加点击事件
                     .clickable { onItemClick(item) })
         }
     }

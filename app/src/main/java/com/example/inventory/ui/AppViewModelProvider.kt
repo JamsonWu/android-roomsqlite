@@ -38,10 +38,14 @@ object AppViewModelProvider {
     // 因为viewModel不能带参数，
     // 所以只能通过 viewModelFactory来实现带参数实例化Model
     val Factory = viewModelFactory {
+        // 调用InitializerViewModelFactoryBuilder.initializer
         // Initializer for ItemEditViewModel
+        // 初始化ViewModel
         initializer {
             ItemEditViewModel(
-                // 为什么要在这里传入，而不是在ViewModel中创建
+                // 关注点分离，ViewModel专注处理UI有关的数据模型
+                // createSavedStateHandle 会保存路由导航传递过来的参数
+                // 直接通过这个实例的map对象中直接读取即可
                 this.createSavedStateHandle()
             )
         }
@@ -53,7 +57,8 @@ object AppViewModelProvider {
         // Initializer for ItemDetailsViewModel
         initializer {
             ItemDetailsViewModel(
-                this.createSavedStateHandle()
+                this.createSavedStateHandle(),
+                inventoryApplication().container.itemsRepository
             )
         }
 
