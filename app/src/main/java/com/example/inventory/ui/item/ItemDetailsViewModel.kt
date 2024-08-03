@@ -16,15 +16,21 @@
 
 package com.example.inventory.ui.item
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.inventory.data.Item
 import com.example.inventory.data.ItemsRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 /**
  * ViewModel to retrieve, update and delete an item from the [ItemsRepository]'s data source.
@@ -42,8 +48,28 @@ class ItemDetailsViewModel(
         private const val TIMEOUT_MILLIS = 5_000L
     }
 
+//    var uiState2 by mutableStateOf(ItemDetailsUiState())
+//        private set
+
+//    init {
+//        viewModelScope.launch {
+//            uiState2 = ItemDetailsUiState(
+//                itemDetails =
+//                itemsRepository.getItemStream(itemId)
+//                    .filterNotNull()
+//                    .first()
+//                    .toItemDetails()
+//            )
+//        }
+//    }
+
+
+    // 从Flow中读取数据
     // 需要提供一个方法读取指定的记录
     // 读取一条记录也是Flow，也要转为StateFlow
+    // 这里使用 StateFlow的好处是：数据库数据发生变化了，详情那边会自动更新
+    // 如果在init内使用协程上下文读取数据，那么详情页就不会自动更新了
+    // 目前的设计：详情页的数据需要用到StateFlow，这样数据修改了也能在详情页体现出来
     val uiState: StateFlow<ItemDetailsUiState> =
         itemsRepository.getItemStream(itemId)
             .filterNotNull()
@@ -54,6 +80,20 @@ class ItemDetailsViewModel(
                 started = SharingStarted.WhileSubscribed(TIMEOUT_MILLIS),
                 initialValue = ItemDetailsUiState()
             )
+
+    // 删除记录
+    fun deleteItem(item: Item) {
+        viewModelScope.launch {
+            // 删除记录方法是异步的，要在协程环境执行
+            itemsRepository.deleteItem(item)
+        }
+    }
+
+    // 删除记录
+    suspend fun deleteItem2(item: Item) {
+        itemsRepository.deleteItem(item)
+    }
+
 }
 
 /**

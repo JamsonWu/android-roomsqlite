@@ -16,6 +16,7 @@
 
 package com.example.inventory.ui.item
 
+import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -42,6 +43,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -60,6 +62,8 @@ import com.example.inventory.data.Item
 import com.example.inventory.ui.AppViewModelProvider
 import com.example.inventory.ui.navigation.NavigationDestination
 import com.example.inventory.ui.theme.InventoryTheme
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 object ItemDetailsDestination : NavigationDestination {
     override val route = "item_details"
@@ -68,7 +72,7 @@ object ItemDetailsDestination : NavigationDestination {
     val routeWithArgs = "$route/{$itemIdArg}"
 }
 
-// 详情，包含销售与删除
+// 详情，包含销售与删除与跳转修改
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ItemDetailsScreen(
@@ -77,19 +81,27 @@ fun ItemDetailsScreen(
     modifier: Modifier = Modifier,
     viewModel: ItemDetailsViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
+
     // 这里直接用 = 而不是用 by
     val uiState = viewModel.uiState.collectAsState()
 
+    // 组件官方文档：https://developer.android.com/develop/ui/compose/components/scaffold
     Scaffold(
+        // 头部菜单
         topBar = {
             InventoryTopAppBar(
                 title = stringResource(ItemDetailsDestination.titleRes),
                 canNavigateBack = true,
                 navigateUp = navigateBack
             )
-        }, floatingActionButton = {
+        },
+        // 编辑按钮
+        floatingActionButton = {
+            // 定义FAB按钮，浮动动作按钮
             FloatingActionButton(
-                onClick = { navigateToEditItem(0) },
+                // 跳转编辑项目
+                onClick = { navigateToEditItem(uiState.value.itemDetails.id) },
+                // onClick = { navigateToEditItem(viewModel.uiState2.itemDetails.id) },
                 shape = MaterialTheme.shapes.medium,
                 modifier = Modifier.padding(dimensionResource(id = R.dimen.padding_large))
 
@@ -103,8 +115,12 @@ fun ItemDetailsScreen(
     ) { innerPadding ->
         ItemDetailsBody(
             itemDetailsUiState = uiState.value,
+            // itemDetailsUiState = viewModel.uiState2,
             onSellItem = { },
-            onDelete = { },
+            onDelete = {
+                viewModel.deleteItem(it)
+                navigateBack()
+            },
             modifier = Modifier
                 .padding(
                     start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
@@ -120,15 +136,16 @@ fun ItemDetailsScreen(
 private fun ItemDetailsBody(
     itemDetailsUiState: ItemDetailsUiState,
     onSellItem: () -> Unit,
-    onDelete: () -> Unit,
+    onDelete: (item: Item) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier.padding(dimensionResource(id = R.dimen.padding_medium)),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_medium))
     ) {
+        // 删除确认状态，此处为啥要定义为可变状态?
+        // 原因：mutableStateOf对Composable组件是可观察状态，值的变更触发UI更新，即重新渲染
         var deleteConfirmationRequired by rememberSaveable { mutableStateOf(false) }
-
         ItemDetails(
             item = itemDetailsUiState.itemDetails.toItem(),
             modifier = Modifier.fillMaxWidth()
@@ -142,17 +159,19 @@ private fun ItemDetailsBody(
             Text(stringResource(R.string.sell))
         }
         OutlinedButton(
+            // 由于弹窗是组件，所以只能使用组件方式来重新渲染弹弹窗
             onClick = { deleteConfirmationRequired = true },
             shape = MaterialTheme.shapes.small,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(stringResource(R.string.delete))
         }
+        // UI组件删除弹窗提示只能以组件方式来处理吗
         if (deleteConfirmationRequired) {
             DeleteConfirmationDialog(
                 onDeleteConfirm = {
                     deleteConfirmationRequired = false
-                    onDelete()
+                    onDelete(itemDetailsUiState.itemDetails.toItem())
                 },
                 onDeleteCancel = { deleteConfirmationRequired = false },
                 modifier = Modifier.padding(dimensionResource(id = R.dimen.padding_medium))
@@ -222,16 +241,19 @@ private fun DeleteConfirmationDialog(
     onDeleteCancel: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // 弹窗组件
     AlertDialog(onDismissRequest = { /* Do nothing */ },
         title = { Text(stringResource(R.string.attention)) },
         text = { Text(stringResource(R.string.delete_question)) },
         modifier = modifier,
         dismissButton = {
+            // 文本按钮，关闭
             TextButton(onClick = onDeleteCancel) {
                 Text(stringResource(R.string.no))
             }
         },
         confirmButton = {
+            // 确认
             TextButton(onClick = onDeleteConfirm) {
                 Text(stringResource(R.string.yes))
             }

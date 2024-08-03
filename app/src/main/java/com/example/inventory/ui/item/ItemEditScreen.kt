@@ -24,6 +24,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
@@ -63,11 +65,15 @@ fun ItemEditScreen(
         modifier = modifier
     ) { innerPadding ->
         ItemEntryBody(
+            // 直接使用 viewModel的状态字段
             itemUiState = viewModel.itemUiState,
-            onItemValueChange = {
-                //
+            // 直接引用 viewModel提供的更新状态方法，状态更新后组件会重新渲染
+            onItemValueChange = viewModel::updateUiState,
+            onSaveClick = {
+                viewModel.saveItem()
+                // 如何才能返回到首页呢？
+                navigateBack()
             },
-            onSaveClick = { },
             modifier = Modifier
                 .padding(
                     start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),

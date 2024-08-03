@@ -70,10 +70,23 @@ fun InventoryNavHost(
             })
         ) {
             // 路由导航其中$it的值如何传？ItemDetailsScreen组件如何接收？
+            // navBackStackEntry ->
+            // val itemId = navBackStackEntry.arguments?.getString(ItemEditDestination.itemIdArg)
             ItemDetailsScreen(
-                navigateToEditItem = { navController.navigate("${ItemEditDestination.route}/$it") },
-                navigateBack = { navController.navigateUp() }
+                // 详情页需要跳转到编辑页面，涉及到路由跳转，提供回调函数
+                // 路由跳转统一在Nav中处理
+                navigateToEditItem = {
+                    navController.navigate(
+                        "${ItemEditDestination.route}/$it"
+                    )
+                },
+                navigateBack = {
+                    // navController.popBackStack()
+                    navController.navigateUp()
+                }
             )
+
+
         }
         composable(
             route = ItemEditDestination.routeWithArgs,

@@ -51,7 +51,7 @@ class ItemEntryViewModel(private val itemsRepository: ItemsRepository) : ViewMod
         }
     }
 
-    // 异步函数，协程调用
+    // 异步函数，组件调用时需要在协程上下文中进行调用
     suspend fun saveItem() {
         if (validateInput()) {
             itemsRepository.insertItem(itemUiState.itemDetails.toItem())
